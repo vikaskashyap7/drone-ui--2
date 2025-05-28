@@ -8,7 +8,7 @@ function App() {
   const [right, setRight] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    socketRef.current = new WebSocket("ws://localhost:5000");
+    socketRef.current = new WebSocket(`https://drone-ui-2.onrender.com`);
 
     socketRef.current.onopen = () => {
       console.log("Connected to WebSocket server");
