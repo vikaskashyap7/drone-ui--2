@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Joystick from "./components/JoystickSlider";
 
 function App() {
   const socketRef = useRef(null);
-  const [left, setLeft] = useState({ x: 0, y: 0 });
-  const [right, setRight] = useState({ x: 0, y: 0 });
-
-  // Store the last sent values for comparison
+  const leftRef = useRef({ x: 0, y: 0 });
+  const rightRef = useRef({ x: 0, y: 0 });
   const lastSentRef = useRef({ lx: null, ly: null, rx: null, ry: null });
 
   useEffect(() => {
@@ -27,33 +25,37 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        const payload = {
-          lx: left.x,
-          ly: left.y,
-          rx: right.x,
-          ry: right.y,
-        };
+  const sendIfChanged = () => {
+    const payload = {
+      lx: leftRef.current.x,
+      ly: leftRef.current.y,
+      rx: rightRef.current.x,
+      ry: rightRef.current.y,
+    };
 
-        const last = lastSentRef.current;
+    const last = lastSentRef.current;
 
-        const hasChanged =
-          payload.lx !== last.lx ||
-          payload.ly !== last.ly ||
-          payload.rx !== last.rx ||
-          payload.ry !== last.ry;
+    const hasChanged =
+      payload.lx !== last.lx ||
+      payload.ly !== last.ly ||
+      payload.rx !== last.rx ||
+      payload.ry !== last.ry;
 
-        if (hasChanged) {
-          socketRef.current.send(JSON.stringify(payload));
-          lastSentRef.current = { ...payload };
-        }
-      }
-    }, 100);
+    if (hasChanged && socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(payload));
+      lastSentRef.current = { ...payload };
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, [left, right]);
+  const handleLeftMove = (pos) => {
+    leftRef.current = pos;
+    sendIfChanged();
+  };
+
+  const handleRightMove = (pos) => {
+    rightRef.current = pos;
+    sendIfChanged();
+  };
 
   return (
     <div
@@ -67,15 +69,14 @@ function App() {
     >
       <div style={{ marginBottom: "50px" }}>
         <h3 style={{ textAlign: "center", color: "#555" }}>Left Joystick</h3>
-        <Joystick onMove={setLeft} />
+        <Joystick onMove={handleLeftMove} />
       </div>
       <div>
         <h3 style={{ textAlign: "center", color: "#555" }}>Right Joystick</h3>
-        <Joystick onMove={setRight} />
+        <Joystick onMove={handleRightMove} />
       </div>
     </div>
   );
 }
 
 export default App;
-
