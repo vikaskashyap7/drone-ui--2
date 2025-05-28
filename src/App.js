@@ -7,7 +7,7 @@ function App() {
   const [right, setRight] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    socketRef.current = new WebSocket(`https://drone-ui-2.onrender.com`); // Ensure `wss://`
+    socketRef.current = new WebSocket(`https://drone-ui-2.onrender.com`);
 
     socketRef.current.onopen = () => {
       console.log("Connected to WebSocket server");
@@ -18,15 +18,28 @@ function App() {
     };
 
     return () => {
-      socketRef.current?.close();
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.close();
+      }
     };
   }, []);
 
   useEffect(() => {
+    let prevPayload = "";
+
     const interval = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        const payload = JSON.stringify({ lx: left.x, ly: left.y, rx: right.x, ry: right.y });
-        socketRef.current.send(payload);
+        const payload = JSON.stringify({
+          lx: left.x,
+          ly: left.y,
+          rx: right.x,
+          ry: right.y,
+        });
+
+        if (payload !== prevPayload) {
+          socketRef.current.send(payload);
+          prevPayload = payload;
+        }
       }
     }, 100);
 
@@ -37,16 +50,20 @@ function App() {
     <div
       style={{
         display: "flex",
-        flexDirection: "row",
         justifyContent: "center",
-        gap: "50px",
-        marginTop: "100px",
         flexWrap: "wrap",
-        padding: "0 20px",
+        gap: "100px",
+        marginTop: "50px",
       }}
     >
-      <Joystick onMove={setLeft} />
-      <Joystick onMove={setRight} />
+      <div style={{ marginBottom: "50px" }}>
+        <h3 style={{ textAlign: "center", color: "#555" }}>Left Joystick</h3>
+        <Joystick onMove={setLeft} />
+      </div>
+      <div>
+        <h3 style={{ textAlign: "center", color: "#555" }}>Right Joystick</h3>
+        <Joystick onMove={setRight} />
+      </div>
     </div>
   );
 }
