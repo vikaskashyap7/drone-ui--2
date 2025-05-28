@@ -6,8 +6,11 @@ function App() {
   const [left, setLeft] = useState({ x: 0, y: 0 });
   const [right, setRight] = useState({ x: 0, y: 0 });
 
+  // Store the last sent values for comparison
+  const lastSentRef = useRef({ lx: null, ly: null, rx: null, ry: null });
+
   useEffect(() => {
-    socketRef.current = new WebSocket(`https://drone-ui-2.onrender.com`);
+    socketRef.current = new WebSocket("wss://drone-ui-2.onrender.com");
 
     socketRef.current.onopen = () => {
       console.log("Connected to WebSocket server");
@@ -25,20 +28,26 @@ function App() {
   }, []);
 
   useEffect(() => {
-    let prevPayload = "";
-
     const interval = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        const payload = JSON.stringify({
+        const payload = {
           lx: left.x,
           ly: left.y,
           rx: right.x,
           ry: right.y,
-        });
+        };
 
-        if (payload !== prevPayload) {
-          socketRef.current.send(payload);
-          prevPayload = payload;
+        const last = lastSentRef.current;
+
+        const hasChanged =
+          payload.lx !== last.lx ||
+          payload.ly !== last.ly ||
+          payload.rx !== last.rx ||
+          payload.ry !== last.ry;
+
+        if (hasChanged) {
+          socketRef.current.send(JSON.stringify(payload));
+          lastSentRef.current = { ...payload };
         }
       }
     }, 100);
@@ -69,3 +78,4 @@ function App() {
 }
 
 export default App;
+
