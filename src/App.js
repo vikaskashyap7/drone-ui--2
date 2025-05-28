@@ -10,7 +10,7 @@ function App() {
   const lastSentRef = useRef({ lx: null, ly: null, rx: null, ry: null });
 
   useEffect(() => {
-    socketRef.current = new WebSocket("wss://drone-ui-2.onrender.com");
+    socketRef.current = new WebSocket(`https://drone-ui-2.onrender.com`);
 
     socketRef.current.onopen = () => {
       console.log("Connected to WebSocket server");
